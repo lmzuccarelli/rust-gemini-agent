@@ -1,0 +1,138 @@
+use crate::config::load::Parameters;
+use crate::handlers::document::{Document, DocumentformInterface};
+use custom_logger as log;
+use http_body_util::{BodyExt, Full};
+use hyper::body::Bytes;
+use hyper::{Method, Request, Uri};
+use hyper_tls::HttpsConnector;
+use hyper_util::client::legacy::Client;
+use hyper_util::rt::TokioExecutor;
+use serde_derive::{Deserialize, Serialize};
+use std::{env, fs};
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeminiResponse {
+    pub candidates: Vec<Candidate>,
+    pub usage_metadata: UsageMetadata,
+    pub model_version: String,
+    pub response_id: String,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Candidate {
+    pub content: Content,
+    pub finish_reason: String,
+    pub index: i64,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Content {
+    pub parts: Vec<Part>,
+    pub role: String,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Part {
+    pub text: String,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UsageMetadata {
+    pub prompt_token_count: i64,
+    pub candidates_token_count: i64,
+    pub total_token_count: i64,
+    pub prompt_tokens_details: Vec<PromptTokensDetail>,
+    pub thoughts_token_count: i64,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PromptTokensDetail {
+    pub modality: String,
+    pub token_count: i64,
+}
+
+pub trait AgentInterface {
+    async fn execute(params: Parameters, key: String)
+    -> Result<String, Box<dyn std::error::Error>>;
+}
+
+pub struct Agent {}
+
+impl AgentInterface for Agent {
+    async fn execute(
+        params: Parameters,
+        key: String,
+    ) -> Result<String, Box<dyn std::error::Error>> {
+        let https = HttpsConnector::new();
+        let client: Client<_, Full<Bytes>> = Client::builder(TokioExecutor::new()).build(https);
+        if params.base_url == "" {
+            return Err(Box::from(format!("{} : gemini api uri not set", 422)));
+        } else {
+            let db_path = params.db_path.clone();
+            let fd = Document::get_formdata(db_path.clone(), key.clone()).await?;
+            let prompt = fd.prompt;
+            let data = match params.test {
+                true => {
+                    log::info!("mode: test");
+                    fs::read(
+                        "/home/lzuccarelli/Projects/rust-gemini-agent/docs/example-response.json",
+                    )?
+                }
+                false => {
+                    log::info!("mode: execute");
+                    let gemini_api_key = env::var("GEMINI_API_KEY")?;
+                    let uri: Uri = format!("{}{}", params.base_url, gemini_api_key).parse()?;
+                    let gemini_payload = get_gemini_payload(prompt);
+                    log::debug!("uri {}", uri);
+                    log::debug!("payload {}", gemini_payload);
+                    let req: Request<Full<Bytes>> = Request::builder()
+                        .method(Method::POST)
+                        .header("Content-Type", "application/json")
+                        .uri(uri)
+                        .body(Full::from(gemini_payload))?;
+                    log::info!("processing ...");
+                    let future = client.request(req).await?;
+                    let response = future.into_body().collect().await?.to_bytes();
+                    response.to_vec()
+                }
+            };
+            let gemini: GeminiResponse = serde_json::from_slice(&data)?;
+            let gemini_document = gemini.candidates[0].content.parts[0].text.clone();
+            log::info!("result from gemini\n\n {}", gemini_document);
+            Document::save_formdata(db_path, key, &data, gemini_document).await?;
+            Ok("exit => 0".to_string())
+        }
+    }
+}
+
+fn get_gemini_payload(prompt: String) -> String {
+    let payload = format!(
+        r#"
+{{
+    "contents": [
+      {{
+        "role": "user",
+        "parts": [
+          {{
+            "text": "{}"
+          }},
+        ]
+      }},
+    ],
+    "generationConfig": {{
+      "thinkingConfig": {{
+        "thinkingBudget": -1,
+      }},
+      "responseMimeType": "text/plain",
+    }},
+}}    "#,
+        prompt
+    );
+    payload
+}
