@@ -86,8 +86,9 @@ impl AgentInterface for Agent {
                 }
                 false => {
                     log::info!("mode: execute");
-                    let gemini_api_key = env::var("GEMINI_API_KEY")?;
-                    let uri: Uri = format!("{}{}", params.base_url, gemini_api_key).parse()?;
+                    // let gemini = env::var("GEMINI_API_KEY")?;
+                    let gemini = "AIzaSyDWahOEO7jmDByzQzq1NjkzsxF1YCr5uK8";
+                    let uri: Uri = format!("{}{}", params.base_url, gemini).parse()?;
                     let gemini_payload = get_gemini_payload(prompt);
                     log::debug!("uri {}", uri);
                     log::debug!("payload {}", gemini_payload);

@@ -18,6 +18,7 @@ tee config/${MS}-config.json <<EOF
 	"log_level": "debug",
 	"certs_dir": "/home/${USER}/certs",
 	"cert_mode": "file",
+  "base_url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=",
 	"db_path" :"/home/${USER}/database",
 	"test": false
 }
@@ -34,7 +35,7 @@ clone_build_service() {
     then
       ssh -i "${PK}" "${USER}@${host}" -tA "rm -rf /home/${USER}/Projects/${REPO_NAME} && cd /home/${USER}/Projects && git clone ${REPO} && cd ${REPO_NAME} && make build"
     else 
-      ssh -i "${PK}" "${USER}@${host}" -tA "cd /home/lzuccarelli/Projects/${REPO_NAME} && rm -rf target/release/*secure* && git pull origin main --rebase && make build"
+      ssh -i "${PK}" "${USER}@${host}" -tA "cd /home/lzuccarelli/Projects/${REPO_NAME} && rm -rf target/release/*gemini* && git pull origin main --rebase && make build"
     fi
   done
 }
