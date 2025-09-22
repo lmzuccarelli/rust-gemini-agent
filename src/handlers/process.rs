@@ -75,7 +75,8 @@ impl AgentInterface for Agent {
             return Err(Box::from(format!("{} : gemini api uri not set", 422)));
         } else {
             let db_path = params.db_path.clone();
-            let fd = Document::get_formdata(db_path.clone(), key.clone()).await?;
+            let fd =
+                Document::get_formdata(format!("{}/queue", db_path.clone()), key.clone()).await?;
             log::debug!("[execute] gemini agent {:?}", fd);
             let prompt = fd.prompt;
             let data = match params.test {

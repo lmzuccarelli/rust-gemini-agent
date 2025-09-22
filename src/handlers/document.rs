@@ -61,7 +61,6 @@ impl DocumentformInterface for Document {
     }
 
     async fn get_formdata(db: String, key: String) -> Result<FormData, Box<dyn std::error::Error>> {
-        log::debug!("[get_formdata] key {}", key,);
         let fd = db_read(db, key).await?;
         Ok(fd)
     }

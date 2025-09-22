@@ -1,0 +1,17 @@
+20250921115509 	
+action-task-lmz-7239.md 	
+generic 	
+Action task overview for LMZ-7239 	
+Evaluate the following text content 'the code base is in a shambles, refactor it and make sure you use SOLID principles, finally create a PR for the staff engineers to review' As an assistant create an action plan from the text content, use the reference issue LMZ-7239. Be detailed as possible. 	   
+
+20250921160025 	
+Using fast fourier transforms for environmental study 	
+programming 	
+fft-implementation.md 	
+Implement a Fast Fourier transform application in Rust, for sound samples (amplitude and frequency) that monitor's beehives to gauge environmental pollution. The application will be deployed on an edge server with limited resources, so ensure the code is efficient, compact with as little dependencies on third party libraries or crates as possible. Give a step by step analysis of the solution. 	   
+
+20250922001110 	
+Detailed workbreakdown for WRIG-5789 load balancer 	
+projects 	
+workbreakdown-5789.md 	
+Create a detailed work breakdown for a layer 7 application load balancer. Security is of high importance. Create user stories and include one for initial investigation. Add an acceptance criteria for each user story, the acceptance must include QE testing, valid documentation and unit tests passing, add any other acceptable criteria as needed. Be detailed as possible, 
