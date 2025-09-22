@@ -579,7 +579,7 @@ dependencies = [
 
 [[package]]
 name = "gemini-ai-agent"
-version = "0.2.5"
+version = "0.2.6"
 dependencies = [
  "async-trait",
  "clap",
@@ -589,11 +589,13 @@ dependencies = [
  "hyper",
  "hyper-tls",
  "hyper-util",
+ "native-tls",
  "serde",
  "serde_derive",
  "serde_json",
  "surrealkv",
  "tokio",
+ "tokio-native-tls",
 ]
 
 [[package]]

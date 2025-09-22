@@ -6,6 +6,7 @@ use hyper::body::Bytes;
 use hyper::{Method, Request};
 use hyper_tls::HttpsConnector;
 use hyper_util::client::legacy::Client;
+use hyper_util::client::legacy::connect::HttpConnector;
 use hyper_util::rt::TokioExecutor;
 use serde_derive::{Deserialize, Serialize};
 use std::fs;
@@ -69,8 +70,16 @@ impl AgentInterface for Agent {
         params: Parameters,
         key: String,
     ) -> Result<String, Box<dyn std::error::Error>> {
-        let https = HttpsConnector::new();
+        let mut http_connector = HttpConnector::new();
+        http_connector.enforce_http(false);
+
+        let native_tls_connector = native_tls::TlsConnector::builder()
+            .danger_accept_invalid_certs(true)
+            .build()?;
+        let tls_connector = tokio_native_tls::TlsConnector::from(native_tls_connector);
+        let https = HttpsConnector::from((http_connector, tls_connector));
         let client: Client<_, Full<Bytes>> = Client::builder(TokioExecutor::new()).build(https);
+
         if params.base_url == "" {
             return Err(Box::from(format!("{} : gemini api uri not set", 422)));
         } else {
