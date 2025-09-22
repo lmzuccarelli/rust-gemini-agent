@@ -1,13 +1,6 @@
 use crate::config::load::Parameters;
 use crate::handlers::document::{Document, DocumentformInterface};
 use custom_logger as log;
-use http_body_util::{BodyExt, Full};
-use hyper::body::Bytes;
-use hyper::{Method, Request};
-use hyper_tls::HttpsConnector;
-use hyper_util::client::legacy::Client;
-use hyper_util::client::legacy::connect::HttpConnector;
-use hyper_util::rt::TokioExecutor;
 use serde_derive::{Deserialize, Serialize};
 use std::fs;
 
@@ -70,57 +63,33 @@ impl AgentInterface for Agent {
         params: Parameters,
         key: String,
     ) -> Result<String, Box<dyn std::error::Error>> {
-        let mut http_connector = HttpConnector::new();
-        http_connector.enforce_http(false);
-
-        let native_tls_connector = native_tls::TlsConnector::builder()
-            .danger_accept_invalid_certs(true)
-            .build()?;
-        let tls_connector = tokio_native_tls::TlsConnector::from(native_tls_connector);
-        let https = HttpsConnector::from((http_connector, tls_connector));
-        let client: Client<_, Full<Bytes>> = Client::builder(TokioExecutor::new()).build(https);
-
-        if params.base_url == "" {
-            return Err(Box::from(format!("{} : gemini api uri not set", 422)));
-        } else {
-            let db_path = params.db_path.clone();
-            let fd =
-                Document::get_formdata(format!("{}/queue", db_path.clone()), key.clone()).await?;
-            log::debug!("[execute] gemini agent {:?}", fd);
-            let prompt = fd.prompt;
-            let data = match params.test {
-                true => {
-                    log::info!("mode: test");
-                    fs::read(
-                        "/home/lzuccarelli/Projects/rust-gemini-agent/docs/example-response.json",
-                    )?
-                }
-                false => {
-                    log::info!("mode: execute");
-                    let gemini = fs::read_to_string("/home/lzuccarelli/.gemini/api-key")?;
-                    let gemini_url = format!("{}{}", params.base_url, gemini);
-                    log::debug!("[execute] url {}", gemini_url);
-                    //let uri: Uri = gemini_url.parse()?;
-                    let gemini_payload = get_gemini_payload(prompt);
-                    //log::debug!("uri {}", uri);
-                    log::debug!("payload {}", gemini_payload);
-                    let req: Request<Full<Bytes>> = Request::builder()
-                        .method(Method::POST)
-                        .header("Content-Type", "application/json")
-                        .uri(gemini_url)
-                        .body(Full::from(gemini_payload))?;
-                    log::info!("processing ...");
-                    let future = client.request(req).await?;
-                    let response = future.into_body().collect().await?.to_bytes();
-                    response.to_vec()
-                }
-            };
-            let gemini: GeminiResponse = serde_json::from_slice(&data)?;
-            let gemini_document = gemini.candidates[0].content.parts[0].text.clone();
-            log::info!("result from gemini\n\n {}", gemini_document);
-            Document::save_formdata(db_path, key, &data, gemini_document).await?;
-            Ok("exit => 0".to_string())
-        }
+        let db_path = params.db_path.clone();
+        let fd = Document::get_formdata(format!("{}/queue", db_path.clone()), key.clone()).await?;
+        log::debug!("[execute] gemini agent {:?}", fd);
+        let prompt = fd.prompt;
+        let data = match params.test {
+            true => {
+                log::info!("mode: test");
+                fs::read("/home/lzuccarelli/Projects/rust-gemini-agent/docs/example-response.json")?
+            }
+            false => {
+                log::info!("mode: execute");
+                let gemini = fs::read_to_string("/home/lzuccarelli/.gemini/api-key")?;
+                let gemini_url = format!("{}{}", params.base_url, gemini);
+                log::debug!("[execute] url {}", gemini_url);
+                let gemini_payload = get_gemini_payload(prompt);
+                log::debug!("payload {}", gemini_payload);
+                let client = reqwest::Client::new();
+                let res = client.post(gemini_url).body(gemini_payload).send().await?;
+                let data = res.bytes().await?;
+                data.to_vec()
+            }
+        };
+        let gemini: GeminiResponse = serde_json::from_slice(&data)?;
+        let gemini_document = gemini.candidates[0].content.parts[0].text.clone();
+        log::info!("result from gemini\n\n {}", gemini_document);
+        Document::save_formdata(db_path, key, &data, gemini_document).await?;
+        Ok("exit => 0".to_string())
     }
 }
 
