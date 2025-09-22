@@ -1,0 +1,21 @@
+{
+    "contents": [
+      {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Implement a Fast Fourier transform application in Rust, for sound samples (amplitude and frequency) that monitor's beehives to gauge environmental pollution. The application will be deployed on an edge server with limited resources, so ensure the code is efficient, compact with as little dependencies on third party libraries or crates as possible.
+
+Give a step by step analysis of the solution.
+ "
+          },
+        ]
+      },
+    ],
+    "generationConfig": {
+      "thinkingConfig": {
+        "thinkingBudget": -1,
+      },
+      "responseMimeType": "text/plain",
+    },
+} 

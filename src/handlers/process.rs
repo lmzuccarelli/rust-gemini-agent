@@ -97,7 +97,7 @@ impl AgentInterface for Agent {
             let gemini: GeminiResponse = serde_json::from_slice(&data)?;
             let gemini_document = gemini.candidates[0].content.parts[0].text.clone();
             log::info!("result from gemini\n\n {}", gemini_document);
-            Document::save_formdata(db_path, key, &data, gemini_document).await?;
+            Document::save_formdata(db_path, key, gemini_document).await?;
             Ok("exit => 0".to_string())
         } else {
             Err(get_error(

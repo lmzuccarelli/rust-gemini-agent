@@ -9,7 +9,6 @@ pub trait DocumentformInterface {
     async fn save_formdata(
         db: String,
         original_key: String,
-        data: &[u8],
         gemini_document: String,
     ) -> Result<String, Box<dyn std::error::Error>>;
     async fn get_formdata(
@@ -38,15 +37,9 @@ impl DocumentformInterface for Document {
     async fn save_formdata(
         db_path: String,
         original_key: String,
-        data: &[u8],
         gemini_document: String,
     ) -> Result<String, Box<dyn std::error::Error>> {
-        log::debug!(
-            "[save_formdata] {}",
-            String::from_utf8(data.to_vec()).unwrap()
-        );
-        let mut fd: FormData = serde_json::from_slice(&data)?;
-        log::debug!("[save_formdata] struct {:?}", fd);
+        let mut fd = db_read(format!("{}/queue", db_path), original_key.clone()).await?;
         fd.key = Some(original_key.clone());
         let json_data = serde_json::to_string(&fd)?;
         db_upsert(
