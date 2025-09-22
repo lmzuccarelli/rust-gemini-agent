@@ -48,6 +48,10 @@ impl DocumentformInterface for Document {
             json_data,
         )
         .await?;
+        log::debug!(
+            "[save_formdata] saving gemini document with key {} ",
+            fd.file,
+        );
         let result = db_upsert(format!("{}/documents", db_path), fd.file, gemini_document).await?;
         db_delete(format!("{}/queue", db_path), original_key).await?;
         Ok(result)
