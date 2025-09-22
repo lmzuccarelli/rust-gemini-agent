@@ -1,4 +1,5 @@
 use crate::config::load::Parameters;
+use crate::handlers::common::get_error;
 use crate::handlers::document::{Document, DocumentformInterface};
 use custom_logger as log;
 use serde_derive::{Deserialize, Serialize};
@@ -80,16 +81,29 @@ impl AgentInterface for Agent {
                 let gemini_payload = get_gemini_payload(prompt);
                 log::debug!("payload {}", gemini_payload);
                 let client = reqwest::Client::new();
-                let res = client.post(gemini_url).body(gemini_payload).send().await?;
-                let data = res.bytes().await?;
-                data.to_vec()
+                let res = client.post(gemini_url).body(gemini_payload).send().await;
+                match res {
+                    Ok(data) => {
+                        let data_result = data.bytes().await?;
+                        data_result.to_vec()
+                    }
+                    Err(_) => {
+                        vec![]
+                    }
+                }
             }
         };
-        let gemini: GeminiResponse = serde_json::from_slice(&data)?;
-        let gemini_document = gemini.candidates[0].content.parts[0].text.clone();
-        log::info!("result from gemini\n\n {}", gemini_document);
-        Document::save_formdata(db_path, key, &data, gemini_document).await?;
-        Ok("exit => 0".to_string())
+        if data.len() > 0 {
+            let gemini: GeminiResponse = serde_json::from_slice(&data)?;
+            let gemini_document = gemini.candidates[0].content.parts[0].text.clone();
+            log::info!("result from gemini\n\n {}", gemini_document);
+            Document::save_formdata(db_path, key, &data, gemini_document).await?;
+            Ok("exit => 0".to_string())
+        } else {
+            Err(get_error(
+                "no valid response from gemini inference server".to_string(),
+            ))
+        }
     }
 }
 
