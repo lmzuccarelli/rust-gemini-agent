@@ -18,7 +18,7 @@ tee config/${MS}-config.json <<EOF
 	"log_level": "debug",
 	"certs_dir": "/home/${USER}/certs",
 	"cert_mode": "file",
-  "base_url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=",
+	"base_url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=",
 	"db_path" :"/home/${USER}/database",
 	"test": false
 }

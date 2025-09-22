@@ -3,7 +3,7 @@ use crate::handlers::document::{Document, DocumentformInterface};
 use custom_logger as log;
 use http_body_util::{BodyExt, Full};
 use hyper::body::Bytes;
-use hyper::{Method, Request, Uri};
+use hyper::{Method, Request};
 use hyper_tls::HttpsConnector;
 use hyper_util::client::legacy::Client;
 use hyper_util::rt::TokioExecutor;
@@ -91,14 +91,14 @@ impl AgentInterface for Agent {
                     let gemini = fs::read_to_string("/home/lzuccarelli/.gemini/api-key")?;
                     let gemini_url = format!("{}{}", params.base_url, gemini);
                     log::debug!("[execute] url {}", gemini_url);
-                    let uri: Uri = gemini_url.parse()?;
+                    //let uri: Uri = gemini_url.parse()?;
                     let gemini_payload = get_gemini_payload(prompt);
-                    log::debug!("uri {}", uri);
+                    //log::debug!("uri {}", uri);
                     log::debug!("payload {}", gemini_payload);
                     let req: Request<Full<Bytes>> = Request::builder()
                         .method(Method::POST)
                         .header("Content-Type", "application/json")
-                        .uri(uri)
+                        .uri(gemini_url)
                         .body(Full::from(gemini_payload))?;
                     log::info!("processing ...");
                     let future = client.request(req).await?;
