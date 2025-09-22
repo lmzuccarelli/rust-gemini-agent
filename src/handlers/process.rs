@@ -8,7 +8,7 @@ use hyper_tls::HttpsConnector;
 use hyper_util::client::legacy::Client;
 use hyper_util::rt::TokioExecutor;
 use serde_derive::{Deserialize, Serialize};
-use std::{env, fs};
+use std::fs;
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -76,6 +76,7 @@ impl AgentInterface for Agent {
         } else {
             let db_path = params.db_path.clone();
             let fd = Document::get_formdata(db_path.clone(), key.clone()).await?;
+            log::debug!("[execute] gemini agent {:?}", fd);
             let prompt = fd.prompt;
             let data = match params.test {
                 true => {
@@ -86,8 +87,7 @@ impl AgentInterface for Agent {
                 }
                 false => {
                     log::info!("mode: execute");
-                    // let gemini = env::var("GEMINI_API_KEY")?;
-                    let gemini = "AIzaSyDWahOEO7jmDByzQzq1NjkzsxF1YCr5uK8";
+                    let gemini = fs::read_to_string("/home/lzuccarelli/.gemini/api-key")?;
                     let uri: Uri = format!("{}{}", params.base_url, gemini).parse()?;
                     let gemini_payload = get_gemini_payload(prompt);
                     log::debug!("uri {}", uri);
