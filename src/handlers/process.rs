@@ -89,7 +89,9 @@ impl AgentInterface for Agent {
                 false => {
                     log::info!("mode: execute");
                     let gemini = fs::read_to_string("/home/lzuccarelli/.gemini/api-key")?;
-                    let uri: Uri = format!("{}{}", params.base_url, gemini).parse()?;
+                    let gemini_url = format!("{}{}", params.base_url, gemini);
+                    log::debug!("[execute] url {}", gemini_url);
+                    let uri: Uri = gemini_url.parse()?;
                     let gemini_payload = get_gemini_payload(prompt);
                     log::debug!("uri {}", uri);
                     log::debug!("payload {}", gemini_payload);
