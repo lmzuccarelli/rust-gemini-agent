@@ -1,0 +1,10 @@
+{
+	"name": "gemini-ai-agent",
+	"description": "A gemini ai agent wriiten in Rust",
+	"log_level": "debug",
+	"certs_dir": "/home/lzuccarelli/certs",
+	"cert_mode": "file",
+	"base_url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=",
+	"db_path" :"/home/lzuccarelli/database",
+	"test": false
+}

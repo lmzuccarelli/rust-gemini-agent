@@ -1,0 +1,7 @@
+{
+	"name": "gemini-agent",
+	"description": "the gemini ai executable agent",
+	"log_level": "info",
+	"base_url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=",
+	"test": true
+}
